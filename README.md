@@ -1,4 +1,4 @@
-# point_density_simulation
+# Point Density Simulation
 
 This repository stores an example dataset and R codes to simulate different combinations of the number of photoquadrats and the number of annotation points per photoquadrat to estimate live coral cover through the benthic point annotation approach.\
 \
