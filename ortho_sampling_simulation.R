@@ -10,8 +10,11 @@ n_photoquads_kapou <- c(10, 20, 30, 40)  # Kapou
 annotation_points <- c(10, 20, 50, 100, 200, 400, 600, 800, 1000)
 
 # create functions for bootstrapping
-# option 1: get a point estimate for each photoquad and use the estimate for bootstrapping
+# option 1: appropriate way to bootstrap - get a point estimate for each 
+#           photoquad and use the estimate for bootstrapping
 # option 2: combine all the annotation points from photoquads for bootstrapping
+#           - not appropriate but included here to demonstrate how it affect 
+#           the accuracy and precision, un-comment to include this option
 
 # function for bootstrapping - option 1
 boot_stat_quad <- function(boot_dat, seed) {
@@ -43,32 +46,34 @@ boot_stat_quad <- function(boot_dat, seed) {
   return(boot_stat_quad_summary)
 }
 
-# function for bootstrapping - option 2
-boot_stat_plot <- function(boot_dat, seed) {
-  
-  mean_live_coral <- mean(boot_dat$live_coral)
-  se_live_coral <- sd(boot_dat$live_coral) / sqrt(nrow(boot_dat))
-  n <- nrow(boot_dat)
-  bt_df <- data.frame(rep = numeric(), stat = numeric(), t = numeric())
-  set.seed(seed)
-  for (l in 1:10000) {
-    vec <- 1:n
-    boot_vec <- sample(vec, n, replace = TRUE)
-    boot_live_coral <- boot_dat$live_coral[boot_vec]
-    boot_live_coral_mean <- mean(boot_live_coral)
-    boot_live_coral_se <- sd(boot_live_coral) / sqrt(length(boot_live_coral))
-    boot_live_coral_t <- (boot_live_coral_mean - mean_live_coral) / boot_live_coral_se
-    temp_bt_df <- data.frame(rep = l, stat = boot_live_coral_mean, t = boot_live_coral_t)
-    bt_df <- bind_rows(bt_df, temp_bt_df)
-  }
-  boot_stat_plot_mean <- mean(bt_df$stat)
-  boot_t_qt <- quantile(bt_df$t, probs = c(0.025, 0.975))
-  boot_ci_l <- mean_live_coral - boot_t_qt[[2]] * se_live_coral
-  boot_ci_u <- mean_live_coral - boot_t_qt[[1]] * se_live_coral
-  boot_stat_plot_summary <- c(boot_stat_plot_mean, boot_ci_l, boot_ci_u)
-  
-  return(boot_stat_plot_summary)
-}
+# # function for bootstrapping - option 2 - un-comment to include
+# boot_stat_plot <- function(boot_dat, seed) {
+#  
+#  mean_live_coral <- mean(boot_dat$live_coral)
+#  se_live_coral <- sd(boot_dat$live_coral) / sqrt(nrow(boot_dat))
+#  n <- nrow(boot_dat)
+#  bt_df <- data.frame(rep = numeric(), stat = numeric(), t = numeric())
+#  set.seed(seed)
+#  for (l in 1:10000) {
+#    vec <- 1:n
+#    boot_vec <- sample(vec, n, replace = TRUE)
+#    boot_live_coral <- boot_dat$live_coral[boot_vec]
+#    boot_live_coral_mean <- mean(boot_live_coral)
+#    boot_live_coral_se <- sd(boot_live_coral) / sqrt(length(boot_live_coral))
+#    boot_live_coral_t <- (boot_live_coral_mean - mean_live_coral) / boot_live_coral_se
+#    temp_bt_df <- data.frame(rep = l, stat = boot_live_coral_mean, t = boot_live_coral_t)
+#    bt_df <- bind_rows(bt_df, temp_bt_df)
+#  }
+#  boot_stat_plot_mean <- mean(bt_df$stat)
+#  boot_t_qt <- quantile(bt_df$t, probs = c(0.025, 0.975))
+#  boot_ci_l <- mean_live_coral - boot_t_qt[[2]] * se_live_coral
+#  boot_ci_u <- mean_live_coral - boot_t_qt[[1]] * se_live_coral
+#  boot_stat_plot_summary <- c(boot_stat_plot_mean, boot_ci_l, boot_ci_u)
+#  
+#  return(boot_stat_plot_summary)
+# }
+
+
 
 # subset data by plot
 
@@ -86,7 +91,7 @@ simu_df <- simulation_data %>%
   select(plot, name, coral)
 photoquad_names <- unique(simu_df$name)
 
-# generate a dataset for simulation for the plot and perform bootstrapping
+# generate a data set for simulation for the plot and perform bootstrapping
 # repeat 1000 times with each one (round) having a unique random seed
 # change the range of random seed numbers to ensure each round has a unique random seed
 # running 1 round at a time - change "size" and adjust the range to run multiple rounds 
@@ -97,9 +102,9 @@ boot_df <- data.frame(plot = character(0),
                       n_photoquad = numeric(0), 
                       n_annotation_point = numeric(0), 
                       seed = numeric(0),
-                      boot_plot_mean = numeric(0), 
-                      boot_plot_025 = numeric(0), 
-                      boot_plot_975 = numeric(0), 
+                      # boot_plot_mean = numeric(0),  # un-comment to include option 2 
+                      # boot_plot_025 = numeric(0),  # un-comment to include option 2
+                      # boot_plot_975 = numeric(0),  # un-comment to include option 2
                       boot_quad_mean = numeric(0), 
                       boot_quad_025 = numeric(0), 
                       boot_quad_975 = numeric(0))
@@ -152,16 +157,16 @@ for (rand_seed in rand_seeds) {
       boot_dat <- boot_dat %>% 
         mutate(live_coral = ifelse(coral == "Other", 0, 1))
       
-      boot_plot_sum <- boot_stat_plot(boot_dat, rand_seed)
+      # boot_plot_sum <- boot_stat_plot(boot_dat, rand_seed)  # un-comment to include option 2
       boot_quad_sum <- boot_stat_quad(boot_dat, rand_seed)
       
       temp_boot_df <- data.frame(plot = plot_name, 
                                  n_photoquad = n_photoquads[n_qd],  
                                  n_annotation_point = annotation_points[n_pt], 
                                  seed = rand_seed, 
-                                 boot_plot_mean = boot_plot_sum[1], 
-                                 boot_plot_025 = boot_plot_sum[2], 
-                                 boot_plot_975 = boot_plot_sum[3], 
+                                 # boot_plot_mean = boot_plot_sum[1],  # un-comment to include option 2
+                                 # boot_plot_025 = boot_plot_sum[2],  # un-comment to include option 2
+                                 # boot_plot_975 = boot_plot_sum[3],  # un-comment to include option 2
                                  boot_quad_mean = boot_quad_sum[1], 
                                  boot_quad_025 = boot_quad_sum[2], 
                                  boot_quad_975 = boot_quad_sum[3])
